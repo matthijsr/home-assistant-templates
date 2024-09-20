@@ -1,0 +1,303 @@
+blueprint:
+  name: Predefined FoH Switch controls
+  description:
+    Controller automation for executing press/hold/release after hold actions triggered by EnOcean PTM 215Z (Friends of Hue) switch.
+    Make sure that 'Elapsed' is enabled in the z2m advanced settings
+  domain: automation
+  input:
+    controller:
+      name: (Zigbee2MQTT) Controller Name
+      description: The name of the controller as defined in z2m (e.g. Livingroom Switch)
+      default: ""
+    base_topic:
+      name: (Zigbee2MQTT) Base mqtt topic
+      description: The base topic as configured in z2m
+      default: zigbee2mqtt
+    left_lights:
+      name: Left controls (Zigbee2MQTT) lights
+      description: The name(s) of the light(s) as defined in z2m to be controlled by the left side of the remote
+      selector:
+        text:
+          multiple: true
+    right_lights:
+      name: Right controls (Zigbee2MQTT) lights
+      description: The name(s) of the light(s) as defined in z2m to be controlled by the right side of the remote
+      selector:
+        text:
+          multiple: true
+    hold_delay:
+      name: Hold delay
+      description:
+        If the button has been held more than the configured Hold delay, the corresponding held action is triggered.
+      default: 500
+      selector:
+        number:
+          min: 100.0
+          max: 1000.0
+          unit_of_measurement: milliseconds
+          mode: box
+          step: 10.0
+mode: restart
+max_exceeded: silent
+variables:
+  hold_delay: !input "hold_delay"
+trigger_variables:
+  base_topic: !input "base_topic"
+  controller: !input "controller"
+trigger:
+  - platform: mqtt
+    topic: "{{ base_topic ~ '/' ~ controller }}"
+condition:
+  - condition: template
+    value_template: >
+      {{
+        ((trigger.payload_json.elapsed is defined and
+        trigger.payload_json.elapsed > hold_delay) or
+        trigger.payload_json.elapsed is not defined) and
+        trigger.payload_json.action != Null
+      }}
+action:
+  - variables:
+      controller: !input "controller"
+      left_lights: !input "left_lights"
+      right_lights: !input "right_lights"
+  - choose:
+      - conditions: '{{ "press_" | string in trigger.payload_json.action }}'
+        sequence:
+          - wait_for_trigger:
+              - platform: mqtt
+                topic: "{{ base_topic ~ '/' ~ controller ~ '/action' }}"
+                payload: release_1
+              - platform: mqtt
+                topic: "{{ base_topic ~ '/' ~ controller ~ '/action' }}"
+                payload: release_2
+              - platform: mqtt
+                topic: "{{ base_topic ~ '/' ~ controller ~ '/action' }}"
+                payload: release_3
+              - platform: mqtt
+                topic: "{{ base_topic ~ '/' ~ controller ~ '/action' }}"
+                payload: release_4
+              - platform: mqtt
+                topic: "{{ base_topic ~ '/' ~ controller ~ '/action' }}"
+                payload: release_1_and_3
+              - platform: mqtt
+                topic: "{{ base_topic ~ '/' ~ controller ~ '/action' }}"
+                payload: release_2_and_4
+            timeout:
+              milliseconds: !input "hold_delay"
+          - choose:
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_1" and wait.trigger.payload == "release_1" }}'
+                sequence:
+                  - service: script.set_state
+                    data:
+                      state: on
+                      lights: "{{ left_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_2" and wait.trigger.payload == "release_2" }}'
+                sequence:
+                  - service: script.set_state
+                    data:
+                      state: off
+                      lights: "{{ left_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_3" and wait.trigger.payload == "release_3" }}'
+                sequence:
+                  - service: script.set_state
+                    data:
+                      state: on
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_4" and wait.trigger.payload == "release_4" }}'
+                sequence:
+                  - service: script.set_state
+                    data:
+                      state: off
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_1_and_3" and wait.trigger.payload == "release_1_and_3" }}'
+                sequence:
+                  - service: script.set_state
+                    data:
+                      state: on
+                      lights: "{{ left_lights }}"
+                  - service: script.set_state
+                    data:
+                      state: on
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_2_and_4" and wait.trigger.payload == "release_2_and_4" }}'
+                sequence:
+                  - service: script.set_state
+                    data:
+                      state: off
+                      lights: "{{ left_lights }}"
+                  - service: script.set_state
+                    data:
+                      state: off
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_1" and wait.trigger == None }}'
+                sequence:
+                  - service: script.start_raise
+                    data:
+                      lights: "{{ left_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_2" and wait.trigger == None }}'
+                sequence:
+                  - service: script.start_dim
+                    data:
+                      lights: "{{ left_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_3" and wait.trigger == None }}'
+                sequence:
+                  - service: script.start_raise
+                    data:
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_4" and wait.trigger == None }}'
+                sequence:
+                  - service: script.start_dim
+                    data:
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_1_and_3" and wait.trigger == None }}'
+                sequence:
+                  - service: script.start_raise
+                    data:
+                      lights: "{{ left_lights }}"
+                  - service: script.start_raise
+                    data:
+                      lights: "{{ right_lights }}"
+              - conditions:
+                  '{{ trigger.payload_json.action == "press_2_and_4" and wait.trigger == None }}'
+                sequence:
+                  - service: script.start_dim
+                    data:
+                      lights: "{{ left_lights }}"
+                  - service: script.start_dim
+                    data:
+                      lights: "{{ right_lights }}"
+      - conditions: '{{ "release_" | string in trigger.payload_json.action }}'
+        sequence:
+          - choose:
+              - conditions: '{{ trigger.payload_json.action == "release_1" }}'
+                sequence:
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ left_lights }}"
+              - conditions: '{{ trigger.payload_json.action == "release_2" }}'
+                sequence:
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ left_lights }}"
+              - conditions: '{{ trigger.payload_json.action == "release_3" }}'
+                sequence:
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ right_lights }}"
+              - conditions: '{{ trigger.payload_json.action == "release_4" }}'
+                sequence:
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ right_lights }}"
+              - conditions: '{{ trigger.payload_json.action == "release_1_and_3" }}'
+                sequence:
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ left_lights }}"
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ right_lights }}"
+              - conditions: '{{ trigger.payload_json.action == "release_2_and_4" }}'
+                sequence:
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ left_lights }}"
+                  - service: script.stop_move
+                    data:
+                      lights: "{{ right_lights }}"
+
+script:
+  set_state:
+    lights:
+      name: Lights to target
+      description: The name(s) of the light(s) as defined in z2m
+      required: true
+      selector:
+        text:
+          multiple: true
+    state:
+      name: Target state
+      description: Desired state
+      required: true
+      default: ""
+    sequence:
+      - service: script.set_lights
+        data:
+          payload: '{{ "{ \"state\": " ~ "\"" ~ state ~ "\" }" }}'
+          lights: "{{ lights }}"
+  start_dim:
+    lights:
+      name: Lights to target
+      description: The name(s) of the light(s) as defined in z2m
+      required: true
+      selector:
+        text:
+          multiple: true
+    sequence:
+      - service: script.set_lights
+        data:
+          payload: "{ \"brightness_move\": -40 }"
+          lights: "{{ lights }}"
+  start_raise:
+    lights:
+      name: Lights to target
+      description: The name(s) of the light(s) as defined in z2m
+      required: true
+      selector:
+        text:
+          multiple: true
+    sequence:
+      - service: script.set_lights
+        data:
+          payload: "{ \"brightness_move\": 40 }"
+          lights: "{{ lights }}"
+  stop_move:
+    lights:
+      name: Lights to target
+      description: The name(s) of the light(s) as defined in z2m
+      required: true
+      selector:
+        text:
+          multiple: true
+    sequence:
+      - service: script.set_lights
+        data:
+          payload: "{ \"brightness_move\": \"stop\" }"
+          lights: "{{ lights }}"
+  set_lights:
+    description: Send requested payload to set of lights
+    fields:
+      lights:
+        name: Lights to target
+        description: The name(s) of the light(s) as defined in z2m
+        required: true
+        selector:
+          text:
+            multiple: true
+      payload:
+        name: Payload for the lights
+        description: (z2m mqtt) payload for the lights
+        default: ""
+    sequence:
+      - repeat:
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+              payload: "{{ payload }}"
+              evaluate_payload: false
+              qos: 0
+              retain: false
+        for_each: "{{expand('lights')}}"
