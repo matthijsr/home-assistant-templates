@@ -218,8 +218,66 @@ action:
                     data:
                       lights: "{{ right_lights }}"
 
-script:
-  set_state:
+set_state:
+  lights:
+    name: Lights to target
+    description: The name(s) of the light(s) as defined in z2m
+    required: true
+    selector:
+      text:
+        multiple: true
+  state:
+    name: Target state
+    description: Desired state
+    required: true
+    default: ""
+  sequence:
+    - service: script.set_lights
+      data:
+        payload: '{{ "{ \"state\": " ~ "\"" ~ state ~ "\" }" }}'
+        lights: "{{ lights }}"
+start_dim:
+  lights:
+    name: Lights to target
+    description: The name(s) of the light(s) as defined in z2m
+    required: true
+    selector:
+      text:
+        multiple: true
+  sequence:
+    - service: script.set_lights
+      data:
+        payload: "{ \"brightness_move\": -40 }"
+        lights: "{{ lights }}"
+start_raise:
+  lights:
+    name: Lights to target
+    description: The name(s) of the light(s) as defined in z2m
+    required: true
+    selector:
+      text:
+        multiple: true
+  sequence:
+    - service: script.set_lights
+      data:
+        payload: "{ \"brightness_move\": 40 }"
+        lights: "{{ lights }}"
+stop_move:
+  lights:
+    name: Lights to target
+    description: The name(s) of the light(s) as defined in z2m
+    required: true
+    selector:
+      text:
+        multiple: true
+  sequence:
+    - service: script.set_lights
+      data:
+        payload: "{ \"brightness_move\": \"stop\" }"
+        lights: "{{ lights }}"
+set_lights:
+  description: Send requested payload to set of lights
+  fields:
     lights:
       name: Lights to target
       description: The name(s) of the light(s) as defined in z2m
@@ -227,77 +285,18 @@ script:
       selector:
         text:
           multiple: true
-    state:
-      name: Target state
-      description: Desired state
-      required: true
+    payload:
+      name: Payload for the lights
+      description: (z2m mqtt) payload for the lights
       default: ""
-    sequence:
-      - service: script.set_lights
-        data:
-          payload: '{{ "{ \"state\": " ~ "\"" ~ state ~ "\" }" }}'
-          lights: "{{ lights }}"
-  start_dim:
-    lights:
-      name: Lights to target
-      description: The name(s) of the light(s) as defined in z2m
-      required: true
-      selector:
-        text:
-          multiple: true
-    sequence:
-      - service: script.set_lights
-        data:
-          payload: "{ \"brightness_move\": -40 }"
-          lights: "{{ lights }}"
-  start_raise:
-    lights:
-      name: Lights to target
-      description: The name(s) of the light(s) as defined in z2m
-      required: true
-      selector:
-        text:
-          multiple: true
-    sequence:
-      - service: script.set_lights
-        data:
-          payload: "{ \"brightness_move\": 40 }"
-          lights: "{{ lights }}"
-  stop_move:
-    lights:
-      name: Lights to target
-      description: The name(s) of the light(s) as defined in z2m
-      required: true
-      selector:
-        text:
-          multiple: true
-    sequence:
-      - service: script.set_lights
-        data:
-          payload: "{ \"brightness_move\": \"stop\" }"
-          lights: "{{ lights }}"
-  set_lights:
-    description: Send requested payload to set of lights
-    fields:
-      lights:
-        name: Lights to target
-        description: The name(s) of the light(s) as defined in z2m
-        required: true
-        selector:
-          text:
-            multiple: true
-      payload:
-        name: Payload for the lights
-        description: (z2m mqtt) payload for the lights
-        default: ""
-    sequence:
-      - repeat:
-        sequence:
-          - action: mqtt.publish
-            data:
-              topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-              payload: "{{ payload }}"
-              evaluate_payload: false
-              qos: 0
-              retain: false
-        for_each: "{{expand('lights')}}"
+  sequence:
+    - repeat:
+      sequence:
+        - action: mqtt.publish
+          data:
+            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+            payload: "{{ payload }}"
+            evaluate_payload: false
+            qos: 0
+            retain: false
+      for_each: "{{expand('lights')}}"
