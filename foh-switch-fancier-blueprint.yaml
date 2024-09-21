@@ -201,6 +201,16 @@ action:
                         target: !input right_payload
       - conditions: '{{ "press_" | string in trigger.payload_json.action }}'
         sequence:
+          - if: '{{ trigger.payload_json.elapsed | int >= cycle_delay }}'
+            then:
+              - if: '{{ left_payload is defined }}'
+                then:
+                  - action: input_select.select_first
+                    target: !input left_payload
+              - if: '{{ right_payload is defined }}'
+                then:
+                  - action: input_select.select_first
+                    target: !input right_payload
           - delay: !input "hold_delay"
           - choose:
               - conditions: '{{ trigger.payload_json.action == "press_1" }}'
@@ -344,12 +354,3 @@ action:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
                             payload: "{ \"brightness_move\": \"stop\" }"
                       for_each: !input right_lights
-  - delay: !input cycle_delay
-  - if: '{{ left_payload is defined }}'
-    then:
-      - action: input_select.select_first
-        target: !input left_payload
-  - if: '{{ right_payload is defined }}'
-    then:
-      - action: input_select.select_first
-        target: !input right_payload
