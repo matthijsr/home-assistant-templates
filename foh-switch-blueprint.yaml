@@ -31,7 +31,7 @@ blueprint:
       name: Hold delay
       description:
         If the button has been held more than the configured Hold delay, the corresponding held action is triggered.
-      default: 500
+      default: 250
       selector:
         number:
           min: 100.0
