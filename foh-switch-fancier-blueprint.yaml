@@ -1,5 +1,5 @@
 blueprint:
-  name: Predefined FoH Switch controls
+  name: Predefined FoH Switch controls with Cycling Buttons
   description:
     Controller automation for executing press/hold/release after hold actions triggered by EnOcean PTM 215Z (Friends of Hue) switch.
     Make sure that 'Elapsed' is enabled in the z2m advanced settings
