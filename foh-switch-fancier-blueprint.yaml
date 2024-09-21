@@ -204,11 +204,11 @@ action:
         sequence:
           - if: '{{ trigger.payload_json.elapsed | int >= cycle_delay }}'
             then:
-              - if: '{{ not not left_payload }}'
+              - if: '{{ not not left_payload and (trigger.payload_json.action == "press_1" or trigger.payload_json.action == "press_1_and_3") }}'
                 then:
                   - action: input_select.select_first
                     target: !input left_payload
-              - if: '{{ not not right_payload }}'
+              - if: '{{ not not right_payload and (trigger.payload_json.action == "press_3" or trigger.payload_json.action == "press_1_and_3") }}'
                 then:
                   - action: input_select.select_first
                     target: !input right_payload
