@@ -70,10 +70,11 @@ blueprint:
 mode: restart
 max_exceeded: silent
 variables:
-  hold_delay: !input "hold_delay"
+  hold_delay: !input hold_delay
+  cycle_delay: !input cycle_delay
 trigger_variables:
-  base_topic: !input "base_topic"
-  controller: !input "controller"
+  base_topic: !input base_topic
+  controller: !input controller
 trigger:
   - platform: mqtt
     topic: '{{ base_topic ~ ''/'' ~ controller }}'
@@ -86,7 +87,7 @@ condition:
       }}
 action:
   - variables:
-      controller: !input "controller"
+      controller: !input controller
       left_payload: !input left_payload
       right_payload: !input right_payload
   - choose:
