@@ -118,10 +118,10 @@ action:
                             payload: '{ "state": "off" }'
                       for_each: !input left_lights
                   - if:
-                      condition: '{{ not not left_payload }}'
-                      then:
-                        - action: input_select.select_first
-                          target: !input left_payload
+                      - conditions: '{{ not not left_payload }}'
+                    then:
+                      - action: input_select.select_first
+                        target: !input left_payload
               - conditions: '{{ trigger.payload_json.action == "release_3" and not not right_payload }}'
                 sequence:
                   - repeat:
@@ -145,40 +145,40 @@ action:
                             payload: '{ "state": "off" }'
                       for_each: !input right_lights
                   - if:
-                      condition: '{{ not not right_payload }}'
-                      then:
-                        - action: input_select.select_first
-                          target: !input right_payload
+                      - conditions: '{{ not not right_payload }}'
+                    then:
+                      - action: input_select.select_first
+                        target: !input right_payload
               - conditions: '{{ trigger.payload_json.action == "release_1_and_3" }}'
                 sequence:
                   - if:
-                      condition: '{{ not not left_payload }}'
-                      then:
-                        - repeat:
-                            sequence:
-                              - action: mqtt.publish
-                                data:
-                                  topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                  payload: '{{ states(left_payload.entity_id) }}'
-                            for_each: !input left_lights
-                        - action: input_select.select_next
-                          target: !input left_payload
-                          data:
-                            cycle: true
+                      - conditions: '{{ not not left_payload }}'
+                    then:
+                      - repeat:
+                          sequence:
+                            - action: mqtt.publish
+                              data:
+                                topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                                payload: '{{ states(left_payload.entity_id) }}'
+                          for_each: !input left_lights
+                      - action: input_select.select_next
+                        target: !input left_payload
+                        data:
+                          cycle: true
                   - if:
-                      condition: '{{ not not right_payload }}'
-                      then:
-                        - repeat:
-                            sequence:
-                              - action: mqtt.publish
-                                data:
-                                  topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                  payload: '{{ states(right_payload.entity_id) }}'
-                            for_each: !input right_lights
-                        - action: input_select.select_next
-                          target: !input right_payload
-                          data:
-                            cycle: true
+                      - conditions: '{{ not not right_payload }}'
+                    then:
+                      - repeat:
+                          sequence:
+                            - action: mqtt.publish
+                              data:
+                                topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                                payload: '{{ states(right_payload.entity_id) }}'
+                          for_each: !input right_lights
+                      - action: input_select.select_next
+                        target: !input right_payload
+                        data:
+                          cycle: true
               - conditions: '{{ trigger.payload_json.action == "release_2_and_4" }}'
                 sequence:
                   - repeat:
@@ -196,15 +196,15 @@ action:
                             payload: '{ "state": "off" }'
                       for_each: !input right_lights
                   - if:
-                      condition: '{{ not not left_payload }}'
-                      then:
-                        - action: input_select.select_first
-                          target: !input left_payload
+                      - conditions: '{{ not not left_payload }}'
+                    then:
+                      - action: input_select.select_first
+                        target: !input left_payload
                   - if:
-                      condition: '{{ not not right_payload }}'
-                      then:
-                        - action: input_select.select_first
-                          target: !input right_payload
+                      - conditions: '{{ not not right_payload }}'
+                    then:
+                      - action: input_select.select_first
+                        target: !input right_payload
       - conditions: '{{ "press_" | string in trigger.payload_json.action }}'
         sequence:
           - delay: !input "hold_delay"
@@ -352,12 +352,12 @@ action:
                       for_each: !input right_lights
   - delay: !input cycle_delay
   - if:
-      condition: '{{ not not left_payload }}'
-      then:
-        - action: input_select.select_first
-          target: !input left_payload
+      - conditions: '{{ not not left_payload }}'
+    then:
+      - action: input_select.select_first
+        target: !input left_payload
   - if:
-      condition: '{{ not not right_payload }}'
-      then:
-        - action: input_select.select_first
-          target: !input right_payload
+      - conditions: '{{ not not right_payload }}'
+    then:
+      - action: input_select.select_first
+        target: !input right_payload
