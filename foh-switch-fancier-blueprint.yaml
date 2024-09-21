@@ -102,7 +102,7 @@ action:
                         - action: mqtt.publish
                           data:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                            payload: !input "left_payload"
+                            payload: '{{ states(left_payload.entity_id) }}'
                       for_each: !input "left_lights"
                   - action: input_select.select_next
                     target: !input "left_payload"
