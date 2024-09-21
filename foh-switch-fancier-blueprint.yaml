@@ -30,14 +30,14 @@ blueprint:
     left_payload:
       name: Left payload helper
       description: The helper containing the cycling payloads when the top left button is pressed multiple times.
-      default: {}
+      default:
       selector:
         entity:
           domain: input_select
     right_payload:
       name: Right payload helper
       description: The helper containing the cycling payloads when the top right button is pressed multiple times.
-      default: {}
+      default:
       selector:
         entity:
           domain: input_select
