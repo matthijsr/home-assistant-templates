@@ -117,8 +117,7 @@ action:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
                             payload: '{ "state": "off" }'
                       for_each: !input left_lights
-                  - if:
-                      - conditions: '{{ not not left_payload }}'
+                  - if: '{{ not not left_payload }}'
                     then:
                       - action: input_select.select_first
                         target: !input left_payload
@@ -144,15 +143,13 @@ action:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
                             payload: '{ "state": "off" }'
                       for_each: !input right_lights
-                  - if:
-                      - conditions: '{{ not not right_payload }}'
+                  - if: '{{ not not right_payload }}'
                     then:
                       - action: input_select.select_first
                         target: !input right_payload
               - conditions: '{{ trigger.payload_json.action == "release_1_and_3" }}'
                 sequence:
-                  - if:
-                      - conditions: '{{ not not left_payload }}'
+                  - if: '{{ not not left_payload }}'
                     then:
                       - repeat:
                           sequence:
@@ -165,8 +162,7 @@ action:
                         target: !input left_payload
                         data:
                           cycle: true
-                  - if:
-                      - conditions: '{{ not not right_payload }}'
+                  - if: '{{ not not right_payload }}'
                     then:
                       - repeat:
                           sequence:
@@ -195,13 +191,11 @@ action:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
                             payload: '{ "state": "off" }'
                       for_each: !input right_lights
-                  - if:
-                      - conditions: '{{ not not left_payload }}'
+                  - if: '{{ not not left_payload }}'
                     then:
                       - action: input_select.select_first
                         target: !input left_payload
-                  - if:
-                      - conditions: '{{ not not right_payload }}'
+                  - if: '{{ not not right_payload }}'
                     then:
                       - action: input_select.select_first
                         target: !input right_payload
@@ -351,13 +345,11 @@ action:
                             payload: "{ \"brightness_move\": \"stop\" }"
                       for_each: !input right_lights
   - delay: !input cycle_delay
-  - if:
-      - conditions: '{{ not not left_payload }}'
+  - if: '{{ not not left_payload }}'
     then:
       - action: input_select.select_first
         target: !input left_payload
-  - if:
-      - conditions: '{{ not not right_payload }}'
+  - if: '{{ not not right_payload }}'
     then:
       - action: input_select.select_first
         target: !input right_payload
