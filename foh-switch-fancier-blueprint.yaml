@@ -30,9 +30,10 @@ blueprint:
     left_payload_helper:
       name: Left payload helper
       description: The helper containing the cycling payloads when the left button is pressed multiple times.
-      device:
-        entity:
-          domain: input_select
+      selector:
+        device:
+          entity:
+            domain: input_select
     cycle_delay:
       name: Cycle delay
       description:
