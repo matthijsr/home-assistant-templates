@@ -32,17 +32,15 @@ blueprint:
       description: The helper containing the cycling payloads when the top left button is pressed multiple times.
       default: {}
       selector:
-        target:
-          entity:
-            domain: input_select
+        entity:
+          domain: input_select
     right_payload:
       name: Right payload helper
       description: The helper containing the cycling payloads when the top right button is pressed multiple times.
       default: {}
       selector:
-        target:
-          entity:
-            domain: input_select
+        entity:
+          domain: input_select
     cycle_delay:
       name: Cycle delay
       description:
@@ -102,7 +100,7 @@ action:
                         - action: mqtt.publish
                           data:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                            payload: '{{ states(left_payload.entity_id) }}'
+                            payload: '{{ left_payload }}'
                       for_each: !input "left_lights"
                   - action: input_select.select_next
                     target: !input "left_payload"
