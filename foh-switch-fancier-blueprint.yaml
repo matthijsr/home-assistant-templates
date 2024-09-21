@@ -100,10 +100,11 @@ action:
                         - action: mqtt.publish
                           data:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                            payload: '{{ left_payload }}'
+                            payload: '{{ left_payload.state }}'
                       for_each: !input "left_lights"
                   - action: input_select.select_next
-                    target: !input "left_payload"
+                    target: 
+                      entity_id: !input "left_payload"
                     data:
                       cycle: true
               - conditions: '{{ trigger.payload_json.action == "release_2" }}'
