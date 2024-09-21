@@ -71,8 +71,6 @@ mode: restart
 max_exceeded: silent
 variables:
   hold_delay: !input "hold_delay"
-  left_payload: !input "left_payload"
-  right_payload: !input "right_payload"
 trigger_variables:
   base_topic: !input "base_topic"
   controller: !input "controller"
@@ -89,6 +87,8 @@ condition:
 action:
   - variables:
       controller: !input "controller"
+      left_payload: !input "left_payload"
+      right_payload: !input "right_payload"
   - choose:
       - conditions: >-
           {{ "release_" in trigger.payload_json.action and
@@ -102,7 +102,7 @@ action:
                         - action: mqtt.publish
                           data:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                            payload: '{{ left_payload[0].state }}'
+                            payload: '{{ left_payload.state }}'
                       for_each: !input "left_lights"
                   - action: input_select.select_next
                     target: !input "left_payload"
