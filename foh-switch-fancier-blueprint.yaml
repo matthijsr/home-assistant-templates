@@ -27,12 +27,22 @@ blueprint:
       selector:
         text:
           multiple: true
-    left_payload_helper:
+    left_payload:
       name: Left payload helper
-      description: The helper containing the cycling payloads when the left button is pressed multiple times.
+      description: The helper containing the cycling payloads when the top left button is pressed multiple times.
+      default: {}
       selector:
-        entity:
-          domain: input_select
+        target:
+          entity:
+            domain: input_select
+    right_payload:
+      name: Right payload helper
+      description: The helper containing the cycling payloads when the top right button is pressed multiple times.
+      default: {}
+      selector:
+        target:
+          entity:
+            domain: input_select
     cycle_delay:
       name: Cycle delay
       description:
@@ -61,6 +71,8 @@ mode: restart
 max_exceeded: silent
 variables:
   hold_delay: !input "hold_delay"
+  left_payload: !input "left_payload"
+  right_payload: !input "right_payload"
 trigger_variables:
   base_topic: !input "base_topic"
   controller: !input "controller"
@@ -83,15 +95,19 @@ action:
           trigger.payload_json.elapsed | int < hold_delay }}
         sequence:
           - choose:
-              - conditions: '{{ trigger.payload_json.action == "release_1" }}'
+              - conditions: '{{ trigger.payload_json.action == "release_1" and not not left_payload }}'
                 sequence:
                   - repeat:
                       sequence:
                         - action: mqtt.publish
                           data:
                             topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                            payload: '{ "state": "on" }'
+                            payload: '{{ left_payload.state }}'
                       for_each: !input "left_lights"
+                  - action: input_select.select_next
+                    target: !input "left_payload"
+                    data:
+                      cycle: true
               - conditions: '{{ trigger.payload_json.action == "release_2" }}'
                 sequence:
                   - repeat:
