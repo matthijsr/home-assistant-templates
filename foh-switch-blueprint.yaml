@@ -135,7 +135,8 @@ action:
                       for_each: !input right_lights
       - conditions: '{{ "press_" | string in trigger.payload_json.action }}'
         sequence:
-          - delay: !input "hold_delay"
+          - delay:
+              milliseconds: !input hold_delay
           - choose:
               - conditions: '{{ trigger.payload_json.action == "press_1" }}'
                 sequence:

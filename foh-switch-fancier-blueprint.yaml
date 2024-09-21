@@ -212,7 +212,8 @@ action:
                 then:
                   - action: input_select.select_first
                     target: !input right_payload
-          - delay: !input "hold_delay"
+          - delay:
+              milliseconds: !input hold_delay
           - choose:
               - conditions: '{{ trigger.payload_json.action == "press_1" }}'
                 sequence:
