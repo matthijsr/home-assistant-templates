@@ -16,12 +16,14 @@ blueprint:
     left_lights:
       name: Left controls (Zigbee2MQTT) lights
       description: The name(s) of the light(s) as defined in z2m to be controlled by the left side of the remote
+      default: []
       selector:
         text:
           multiple: true
     right_lights:
       name: Right controls (Zigbee2MQTT) lights
       description: The name(s) of the light(s) as defined in z2m to be controlled by the right side of the remote
+      default: []
       selector:
         text:
           multiple: true
