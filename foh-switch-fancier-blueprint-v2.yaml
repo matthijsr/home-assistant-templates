@@ -133,54 +133,48 @@ action:
         sequence:
           - if: '{{ trigger.payload_json.action == "release_1" or trigger.payload_json.action == "release_1_and_3" }}'
             then:
-              - repeat:
-                  sequence:
-                    - choose:
-                        - conditions: '{{ states("light." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
+              - if: '{{ not not left_number }}'
+                then:
+                  - if: '{{ states(left_number.entity_id) | int >= 100000}}'
+                    then:
+                      - action: counter.set_value
+                        target: !input left_number
+                        data:
+                          value: 0
+                    else:
+                      - repeat:
                           sequence:
                             - action: mqtt.publish
                               data:
                                 topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                payload: '{ "state": "on" }'
-                        - conditions: '{{ not not left_number }}'
-                          sequence:
-                            - repeat:
-                                sequence:
-                                  - action: mqtt.publish
-                                    data:
-                                      topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                      payload: '{{ (left_payloads | list)[states(left_number.entity_id) | int] }}'
-                                for_each: !input left_lights
-                            - action: counter.set_value
-                              target: !input left_number
-                              data:
-                                value: '{{ (states(left_number.entity_id) | int + 1) % (left_payloads | list | count) }}'
-                  for_each: !input left_lights
+                                payload: '{{ (left_payloads | list)[states(left_number.entity_id) | int] }}'
+                          for_each: !input left_lights
+                      - action: counter.set_value
+                        target: !input left_number
+                        data:
+                          value: '{{ (states(left_number.entity_id) | int + 1) % (left_payloads | list | count) }}'
           - if: '{{ trigger.payload_json.action == "release_3" or trigger.payload_json.action == "release_1_and_3" }}'
             then:
-              - repeat:
-                  sequence:
-                    - choose:
-                        - conditions: '{{ states("light." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
+              - if: '{{ not not right_number }}'
+                then:
+                  - if: '{{ states(right_number.entity_id) | int >= 100000}}'
+                    then:
+                      - action: counter.set_value
+                        target: !input right_number
+                        data:
+                          value: 0
+                    else:
+                      - repeat:
                           sequence:
                             - action: mqtt.publish
                               data:
                                 topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                payload: '{ "state": "on" }'
-                        - conditions: '{{ not not right_number }}'
-                          sequence:
-                            - repeat:
-                                sequence:
-                                  - action: mqtt.publish
-                                    data:
-                                      topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                      payload: '{{ (right_payloads | list)[states(right_number.entity_id) | int] }}'
-                                for_each: !input right_lights
-                            - action: counter.set_value
-                              target: !input right_number
-                              data:
-                                value: '{{ (states(right_number.entity_id) | int + 1) % (right_payloads | list | count) }}'
-                  for_each: !input right_lights
+                                payload: '{{ (right_payloads | list)[states(right_number.entity_id) | int] }}'
+                          for_each: !input right_lights
+                      - action: counter.set_value
+                        target: !input right_number
+                        data:
+                          value: '{{ (states(right_number.entity_id) | int + 1) % (right_payloads | list | count) }}'
           - if: '{{ trigger.payload_json.action == "release_2" or trigger.payload_json.action == "release_2_and_4" }}'
             then:
               - repeat:
@@ -219,8 +213,58 @@ action:
                 then:
                   - action: counter.reset
                     target: !input right_number
+          - if: '{{ trigger.payload_json.action == "press_1" or trigger.payload_json.action == "press_1_and_3" }}'
+            then:
+              - repeat:
+                  sequence:
+                    - if: '{{ states("light." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
+                      then:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{ "state": "on" }'
+                        - if: '{{ not not left_number }}'
+                          then:
+                            - action: counter.set_value
+                              target: !input left_number
+                              data:
+                                value: 100000
+                  for_each: !input left_lights
+          - if: '{{ trigger.payload_json.action == "press_3" or trigger.payload_json.action == "press_1_and_3" }}'
+            then:
+              - repeat:
+                  sequence:
+                    - if: '{{ states("light." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
+                      then:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{ "state": "on" }'
+                        - if: '{{ not not right_number }}'
+                          then:
+                            - action: counter.set_value
+                              target: !input right_number
+                              data:
+                                value: 100000
+                  for_each: !input right_lights
           - delay:
               milliseconds: !input hold_delay
+          - if: '{{ not not left_number }}'
+            then:
+              - if: '{{ states(left_number.entity_id) | int >= 100000 }}'
+                then:
+                  - action: counter.set_value
+                    target: !input left_number
+                    data:
+                      value: 0
+          - if: '{{ not not right_number }}'
+            then:
+              - if: '{{ states(right_number.entity_id) | int >= 100000 }}'
+                then:
+                  - action: counter.set_value
+                    target: !input right_number
+                    data:
+                      value: 0
           - if: '{{ trigger.payload_json.action == "press_1" or trigger.payload_json.action == "press_1_and_3" }}'
             then:
               - repeat:
