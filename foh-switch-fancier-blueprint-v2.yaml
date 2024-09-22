@@ -145,12 +145,12 @@ action:
                         - conditions: '{{ not not left_number }}'
                           sequence:
                             - repeat:
-                              sequence:
-                                - action: mqtt.publish
-                                  data:
-                                    topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                    payload: '{{ (left_payloads | list)[states(left_number.entity_id) | int] }}'
-                              for_each: !input left_lights
+                                sequence:
+                                  - action: mqtt.publish
+                                    data:
+                                      topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                                      payload: '{{ (left_payloads | list)[states(left_number.entity_id) | int] }}'
+                                for_each: !input left_lights
                             - action: counter.set_value
                               target: !input left_number
                               data:
@@ -170,12 +170,12 @@ action:
                         - conditions: '{{ not not right_number }}'
                           sequence:
                             - repeat:
-                              sequence:
-                                - action: mqtt.publish
-                                  data:
-                                    topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
-                                    payload: '{{ (right_payloads | list)[states(right_number.entity_id) | int] }}'
-                              for_each: !input right_lights
+                                sequence:
+                                  - action: mqtt.publish
+                                    data:
+                                      topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                                      payload: '{{ (right_payloads | list)[states(right_number.entity_id) | int] }}'
+                                for_each: !input right_lights
                             - action: counter.set_value
                               target: !input right_number
                               data:
