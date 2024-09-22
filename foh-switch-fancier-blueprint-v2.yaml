@@ -1,0 +1,394 @@
+blueprint:
+  name: Predefined FoH Switch controls with Cycling Buttons V2
+  description:
+    Controller automation for executing press/hold/release after hold actions triggered by EnOcean PTM 215Z (Friends of Hue) switch.
+    Make sure that 'Elapsed' is enabled in the z2m advanced settings
+  domain: automation
+  input:
+    controller:
+      name: (Zigbee2MQTT) Controller Name
+      description: The name of the controller as defined in z2m (e.g. Livingroom Switch)
+      default: ""
+    base_topic:
+      name: (Zigbee2MQTT) Base mqtt topic
+      description: The base topic as configured in z2m
+      default: zigbee2mqtt
+    left_lights:
+      name: Left controls (Zigbee2MQTT) lights
+      description: The name(s) of the light(s) as defined in z2m to be controlled by the left side of the remote
+      default: []
+      selector:
+        text:
+          multiple: true
+    right_lights:
+      name: Right controls (Zigbee2MQTT) lights
+      description: The name(s) of the light(s) as defined in z2m to be controlled by the right side of the remote
+      default: []
+      selector:
+        text:
+          multiple: true
+    left_number:
+      name: Left payload helper
+      description: The number helper containing for cycling payloads when the top left button is pressed multiple times.
+      default: {}
+      selector:
+        target:
+          entity:
+            domain: counter
+    right_number:
+      name: Right payload helper
+      description: The number helper containing for cycling payloads when the top right button is pressed multiple times.
+      default: {}
+      selector:
+        target:
+          entity:
+            domain: counter
+    left_payloads:
+      name: Left controls (Zigbee2MQTT) payloads
+      description: The payload(s) to be sent by the left side of the remote
+      default:
+        - '{ "state": "on" }'
+      selector:
+        text:
+          multiple: true
+    right_payloads:
+      name: Right controls (Zigbee2MQTT) payloads
+      description: The payload(s) to be sent by the right side of the remote
+      default:
+        - '{ "state": "on" }'
+      selector:
+        text:
+          multiple: true
+    left_brightness_move:
+      name: Left brightness move value
+      default: 40
+      selector:
+        number:
+          min: 1
+          max: 254
+          mode: box
+    right_brightness_move:
+      name: Right brightness move value
+      default: 40
+      selector:
+        number:
+          min: 1
+          max: 254
+          mode: box
+    cycle_delay:
+      name: Cycle delay
+      description:
+        If the button hasn't been interacted with for more than the configurable Cycle delay, reset to using the first payload.
+      default: 3000
+      selector:
+        number:
+          min: 1000.0
+          max: 10000.0
+          unit_of_measurement: milliseconds
+          mode: box
+          step: 1000.0
+    hold_delay:
+      name: Hold delay
+      description:
+        If the button has been held more than the configured Hold delay, the corresponding held action is triggered.
+      default: 250
+      selector:
+        number:
+          min: 100.0
+          max: 1000.0
+          unit_of_measurement: milliseconds
+          mode: box
+          step: 10.0
+mode: restart
+max_exceeded: silent
+variables:
+  hold_delay: !input hold_delay
+  cycle_delay: !input cycle_delay
+trigger_variables:
+  base_topic: !input base_topic
+  controller: !input controller
+trigger:
+  - platform: mqtt
+    topic: '{{ base_topic ~ ''/'' ~ controller }}'
+condition:
+  - condition: template
+    value_template: |
+      {{
+        ('release_' in trigger.payload_json.action and trigger.payload_json.elapsed is defined)
+        or 'press_' in trigger.payload_json.action
+      }}
+action:
+  - variables:
+      controller: !input controller
+      left_number: !input left_number
+      right_number: !input right_number
+      left_payloads: !input left_payloads
+      right_payloads: !input right_payloads
+      left_brightness_move: !input left_brightness_move
+      right_brightness_move: !input right_brightness_move
+  - choose:
+      - conditions: >-
+          {{ "release_" in trigger.payload_json.action and
+          trigger.payload_json.elapsed | int < hold_delay }}
+        sequence:
+          - choose:
+              - conditions: '{{ trigger.payload_json.action == "release_1" and not not left_number }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ left_payloads[states(left_number.entity_id)] }}'
+                      for_each: !input left_lights
+                  - action: counter.set_value
+                    target: !input left_number
+                    data:
+                      value: '{{ (states(left_number.entity_id) + 1) % (left_payloads | count) }}'
+              - conditions: '{{ trigger.payload_json.action == "release_2" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{ "state": "off" }'
+                      for_each: !input left_lights
+                  - if: '{{ not not left_number }}'
+                    then:
+                      - action: counter.reset
+                        target: !input left_number
+              - conditions: '{{ trigger.payload_json.action == "release_3" and not not right_number }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ right_payloads[states(right_number.entity_id)] }}'
+                      for_each: !input right_lights
+                  - action: counter.set_value
+                    target: !input right_number
+                    data:
+                      value: '{{ (states(right_number.entity_id) + 1) % (right_payloads | count) }}'
+              - conditions: '{{ trigger.payload_json.action == "release_4" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{ "state": "off" }'
+                      for_each: !input right_lights
+                  - if: '{{ not not right_number }}'
+                    then:
+                      - action: counter.reset
+                        target: !input right_number
+              - conditions: '{{ trigger.payload_json.action == "release_1_and_3" }}'
+                sequence:
+                  - if: '{{ not not left_number }}'
+                    then:
+                      - repeat:
+                          sequence:
+                            - action: mqtt.publish
+                              data:
+                                topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                                payload: '{{ left_payloads[states(left_number.entity_id)] }}'
+                          for_each: !input left_lights
+                      - action: counter.set_value
+                        target: !input left_number
+                        data:
+                          value: '{{ (states(left_number.entity_id) + 1) % (left_payloads | count) }}'
+                  - if: '{{ not not right_number }}'
+                    then:
+                      - repeat:
+                          sequence:
+                            - action: mqtt.publish
+                              data:
+                                topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                                payload: '{{ right_payloads[states(right_number.entity_id)] }}'
+                          for_each: !input right_lights
+                      - action: counter.set_value
+                        target: !input right_number
+                        data:
+                          value: '{{ (states(right_number.entity_id) + 1) % (right_payloads | count) }}'
+              - conditions: '{{ trigger.payload_json.action == "release_2_and_4" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{ "state": "off" }'
+                      for_each: !input left_lights
+                  - if: '{{ not not left_number }}'
+                    then:
+                      - action: counter.reset
+                        target: !input left_number
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{ "state": "off" }'
+                      for_each: !input right_lights
+                  - if: '{{ not not right_number }}'
+                    then:
+                      - action: counter.reset
+                        target: !input right_number
+      - conditions: '{{ "press_" | string in trigger.payload_json.action }}'
+        sequence:
+          - if: '{{ trigger.payload_json.elapsed | int >= cycle_delay }}'
+            then:
+              - if: '{{ not not left_number and (trigger.payload_json.action == "press_1" or trigger.payload_json.action == "press_1_and_3") }}'
+                then:
+                  - action: counter.reset
+                    target: !input left_number
+              - if: '{{ not not right_number and (trigger.payload_json.action == "press_3" or trigger.payload_json.action == "press_1_and_3") }}'
+                then:
+                  - action: counter.reset
+                    target: !input right_number
+          - delay:
+              milliseconds: !input hold_delay
+          - choose:
+              - conditions: '{{ trigger.payload_json.action == "press_1" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": " ~ left_brightness_move ~ " }" }}'
+                      for_each: !input left_lights
+              - conditions: '{{ trigger.payload_json.action == "press_2" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": -" ~ left_brightness_move ~ " }" }}'
+                      for_each: !input left_lights
+              - conditions: '{{ trigger.payload_json.action == "press_3" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": " ~ right_brightness_move ~ " }" }}'
+                      for_each: !input right_lights
+              - conditions: '{{ trigger.payload_json.action == "press_4" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": -" ~ right_brightness_move ~ " }" }}'
+                      for_each: !input right_lights
+              - conditions: '{{ trigger.payload_json.action == "press_1_and_3" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": " ~ left_brightness_move ~ " }" }}'
+                      for_each: !input left_lights
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": " ~ right_brightness_move ~ " }" }}'
+                      for_each: !input right_lights
+              - conditions: '{{ trigger.payload_json.action == "press_2_and_4" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": -" ~ left_brightness_move ~ " }" }}'
+                      for_each: !input left_lights
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: '{{ "{ \"brightness_move\": -" ~ right_brightness_move ~ " }" }}'
+                      for_each: !input right_lights
+      - conditions: >-
+          {{ "release_" in trigger.payload_json.action and
+          trigger.payload_json.elapsed | int > hold_delay }}
+        sequence:
+          - choose:
+              - conditions: '{{ trigger.payload_json.action == "release_1" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input left_lights
+              - conditions: '{{ trigger.payload_json.action == "release_2" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input left_lights
+              - conditions: '{{ trigger.payload_json.action == "release_3" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input right_lights
+              - conditions: '{{ trigger.payload_json.action == "release_4" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input right_lights
+              - conditions: '{{ trigger.payload_json.action == "release_1_and_3" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input left_lights
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input right_lights
+              - conditions: '{{ trigger.payload_json.action == "release_2_and_4" }}'
+                sequence:
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input left_lights
+                  - repeat:
+                      sequence:
+                        - action: mqtt.publish
+                          data:
+                            topic: '{{ "zigbee2mqtt/" ~ repeat.item ~ "/set" }}'
+                            payload: "{ \"brightness_move\": \"stop\" }"
+                      for_each: !input right_lights
