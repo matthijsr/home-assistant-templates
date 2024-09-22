@@ -144,7 +144,7 @@ action:
                   - action: counter.set_value
                     target: !input left_number
                     data:
-                      value: '{{ (states(left_number.entity_id) | int + 1) % (left_payloads | count) }}'
+                      value: '{{ (states(left_number.entity_id) | int + 1) % (left_payloads | list | count) }}'
               - conditions: '{{ trigger.payload_json.action == "release_2" }}'
                 sequence:
                   - repeat:
@@ -170,7 +170,7 @@ action:
                   - action: counter.set_value
                     target: !input right_number
                     data:
-                      value: '{{ (states(right_number.entity_id) | int + 1) % (right_payloads | count) }}'
+                      value: '{{ (states(right_number.entity_id) | int + 1) % (right_payloads | list | count) }}'
               - conditions: '{{ trigger.payload_json.action == "release_4" }}'
                 sequence:
                   - repeat:
@@ -198,7 +198,7 @@ action:
                       - action: counter.set_value
                         target: !input left_number
                         data:
-                          value: '{{ (states(left_number.entity_id) | int + 1) % (left_payloads | count) }}'
+                          value: '{{ (states(left_number.entity_id) | int + 1) % (left_payloads | list | count) }}'
                   - if: '{{ not not right_number }}'
                     then:
                       - repeat:
@@ -211,7 +211,7 @@ action:
                       - action: counter.set_value
                         target: !input right_number
                         data:
-                          value: '{{ (states(right_number.entity_id) | int + 1) % (right_payloads | count) }}'
+                          value: '{{ (states(right_number.entity_id) | int + 1) % (right_payloads | list | count) }}'
               - conditions: '{{ trigger.payload_json.action == "release_2_and_4" }}'
                 sequence:
                   - repeat:
