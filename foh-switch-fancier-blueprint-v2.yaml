@@ -136,7 +136,7 @@ action:
               - repeat:
                   sequence:
                     - choose:
-                        - conditions: '{{ states("lights." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
+                        - conditions: '{{ states("light." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
                           sequence:
                             - action: mqtt.publish
                               data:
@@ -161,7 +161,7 @@ action:
               - repeat:
                   sequence:
                     - choose:
-                        - conditions: '{{ states("lights." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
+                        - conditions: '{{ states("light." + (repeat.item | regex_replace(find=" |\\|\/", replace="_", ignorecase=False))) == "off" }}'
                           sequence:
                             - action: mqtt.publish
                               data:
