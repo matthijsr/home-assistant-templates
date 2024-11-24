@@ -7,22 +7,22 @@ blueprint:
   input:
     controller:
       name: (Zigbee2MQTT) Controller Name
-      description: The name of the controller as defined in z2m (e.g. Livingroom Switch)
+      description: The name of the controller as defined in Zigbee2MQTT (e.g. Livingroom Switch)
       default: ""
     base_topic:
       name: (Zigbee2MQTT) Base mqtt topic
-      description: The base topic as configured in z2m
+      description: The base topic as configured in Zigbee2MQTT
       default: zigbee2mqtt
     left_lights:
       name: Left controls (Zigbee2MQTT) lights
-      description: The name(s) of the light(s) as defined in z2m to be controlled by the left side of the remote
+      description: The name(s) of the light(s) as defined in Zigbee2MQTT to be controlled by the left side of the remote
       default: []
       selector:
         text:
           multiple: true
     right_lights:
       name: Right controls (Zigbee2MQTT) lights
-      description: The name(s) of the light(s) as defined in z2m to be controlled by the right side of the remote
+      description: The name(s) of the light(s) as defined in Zigbee2MQTT to be controlled by the right side of the remote
       default: []
       selector:
         text:
