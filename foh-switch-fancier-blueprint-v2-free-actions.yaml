@@ -231,29 +231,29 @@ action:
               milliseconds: !input hold_delay
           - if: '{{ trigger.payload_json.action == "press_1" or trigger.payload_json.action == "press_1_and_3" }}'
             then:
-              - sequence: left_top_hold
+              - sequence: !input left_top_hold
           - if: '{{ trigger.payload_json.action == "press_2" or trigger.payload_json.action == "press_2_and_4" }}'
             then:
-              - sequence: left_bottom_hold
+              - sequence: !input left_bottom_hold
           - if: '{{ trigger.payload_json.action == "press_3" or trigger.payload_json.action == "press_1_and_3" }}'
             then:
-              - sequence: right_top_hold
+              - sequence: !input right_top_hold
           - if: '{{ trigger.payload_json.action == "press_4" or trigger.payload_json.action == "press_2_and_4" }}'
             then:
-              - sequence: right_bottom_hold
+              - sequence: !input right_bottom_hold
       - conditions: >-
           {{ "release_" in trigger.payload_json.action and
           trigger.payload_json.elapsed | int > hold_delay }}
         sequence:
           - if: '{{ trigger.payload_json.action == "release_1" or trigger.payload_json.action == "release_1_and_3" }}'
             then:
-              - sequence: left_top_release
+              - sequence: !input left_top_release
           - if: '{{ trigger.payload_json.action == "release_2" or trigger.payload_json.action == "release_2_and_4" }}'
             then:
-              - sequence: right_top_release
+              - sequence: !input right_top_release
           - if: '{{ trigger.payload_json.action == "release_3" or trigger.payload_json.action == "release_1_and_3" }}'
             then:
-              - sequence: left_bottom_release
+              - sequence: !input left_bottom_release
           - if: '{{ trigger.payload_json.action == "release_4" or trigger.payload_json.action == "release_2_and_4" }}'
             then:
-              - sequence: right_bottom_release
+              - sequence: !input right_bottom_release
