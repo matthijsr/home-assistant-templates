@@ -204,7 +204,7 @@ action:
                     target: !input left_number
           - if: '{{ trigger.payload_json.action == "release_4" or trigger.payload_json.action == "release_2_and_4" }}'
             then:
-              - sequence: !input left_bottom_press
+              - sequence: !input right_bottom_press
               - if: '{{ not not right_number }}'
                 then:
                   - action: counter.reset
@@ -250,10 +250,10 @@ action:
               - sequence: !input left_top_release
           - if: '{{ trigger.payload_json.action == "release_2" or trigger.payload_json.action == "release_2_and_4" }}'
             then:
-              - sequence: !input right_top_release
+              - sequence: !input left_bottom_release
           - if: '{{ trigger.payload_json.action == "release_3" or trigger.payload_json.action == "release_1_and_3" }}'
             then:
-              - sequence: !input left_bottom_release
+              - sequence: !input right_top_release
           - if: '{{ trigger.payload_json.action == "release_4" or trigger.payload_json.action == "release_2_and_4" }}'
             then:
               - sequence: !input right_bottom_release
